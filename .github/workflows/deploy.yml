@@ -41,20 +41,20 @@ jobs:
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region ap-east-1  # Replace with your region
+          aws configure set region us-east-1  # Replace with your region
 
       # Step 3: Log in to AWS ECR
       - name: Log in to AWS ECR
         run: |
-          echo $(aws ecr get-login-password --region us-east-1) | docker login --username AWS --password-stdin 241533137718.dkr.ecr.us-east-1.amazonaws.com
-          aws ecr get-login-password --region ap-east-1 | docker login --username AWS --password-stdin 241533137718.dkr.ecr.ap-east-1.amazonaws.com
+          
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 241533137718.dkr.ecr.us-east-1.amazonaws.com
 
       # Step 4: Build and push Docker image to AWS ECR
       - name: Build and Push Docker image
         run: |
           docker build -t suspicious_package_detection .
-          docker tag suspicious_package_detection:latest 241533137718.dkr.ecr.ap-east-1.amazonaws.com/suspicious_package_detection:latest
-          docker push 241533137718.dkr.ecr.ap-east-1.amazonaws.com/suspicious_package_detection:latest
+          docker tag suspicious_package_detection:latest 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest
+          docker push 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest
 
   # Continuous Deployment
   deploy_to_ec2:
@@ -77,39 +77,39 @@ jobs:
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region ap-east-1  # Replace with your region
+          aws configure set region us-east-1  # Replace with your region
 
       # Step 4: Deploy to EC2 instance
       - name: Deploy to EC2 instance
         run: |
           # Connect to EC2 and perform deployment
-          ssh -o StrictHostKeyChecking=no ubuntu@18.207.167.34 << EOF
+          ssh -o StrictHostKeyChecking=no ubuntu@174.129.93.55 << EOF
             # Stop and remove any running container on port 8080
-            CONTAINER_ID=$(docker ps -q -f "ancestor=241533137718.dkr.ecr.ap-east-1.amazonaws.com/suspicious_package_detection:latest")
+            CONTAINER_ID=$(docker ps -q -f "ancestor=241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest")
             if [ ! -z "$CONTAINER_ID" ]; then
               docker stop $CONTAINER_ID
               docker rm $CONTAINER_ID
             fi
 
             # Optionally remove old images if needed
-            IMAGE_ID=$(docker images -q 241533137718.dkr.ecr.ap-east-1.amazonaws.com/suspicious_package_detection:latest)
+            IMAGE_ID=$(docker images -q 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest)
             if [ ! -z "$IMAGE_ID" ]; then
               docker rmi $IMAGE_ID
             fi
 
             # Login to AWS ECR
-            aws ecr get-login-password --region ap-east-1 | docker login --username AWS --password-stdin 241533137718.dkr.ecr.ap-east-1.amazonaws.com
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 241533137718.dkr.ecr.us-east-1.amazonaws.com
             
             # Pull the Docker image from ECR
-            docker pull 241533137718.dkr.ecr.ap-east-1.amazonaws.com/suspicious_package_detection:latest
+            docker pull 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest
 
             # Run the Docker container on EC2
-            docker run -d -p 8080:8080 241533137718.dkr.ecr.ap-east-1.amazonaws.com/suspicious_package_detection:latest
+            docker run -d -p 8080:8080 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest
           EOF
 
       # Optional: Check the running container logs (for debugging purposes)
       - name: Check Docker container logs
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@13.200.207.243 << EOF
+          ssh -o StrictHostKeyChecking=no ubuntu@174.129.93.55 << EOF
             docker ps
           EOF
