@@ -80,41 +80,34 @@ jobs:
           aws configure set region us-east-1  # Replace with your region
 
       # Step 4: Deploy to EC2 instance
-      name: Deploy to EC2 instance
-      run: |
-        # Authenticate Docker to AWS ECR locally
-        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 241533137718.dkr.ecr.us-east-1.amazonaws.com
-        
-        # Pull the image locally
-        docker pull 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest
-        
-        # Save the image to a tar file
-        docker save 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest > image.tar
-      
-        # Transfer the tar file to the EC2 instance
-        scp -o StrictHostKeyChecking=no image.tar ubuntu@174.129.93.55:/home/ubuntu/
-      
-        # Connect to EC2 and perform deployment
-        ssh -o StrictHostKeyChecking=no ubuntu@174.129.93.55 << EOF
-          # Stop and remove any running container on port 8080
-          CONTAINER_ID=\$(docker ps -q -f "ancestor=241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest")
-          if [ ! -z "\$CONTAINER_ID" ]; then
-            docker stop \$CONTAINER_ID
-            docker rm \$CONTAINER_ID
-          fi
-      
-          # Remove old images if needed
-          IMAGE_ID=\$(docker images -q 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest)
-          if [ ! -z "\$IMAGE_ID" ]; then
-            docker rmi \$IMAGE_ID
-          fi
-      
-          # Load the Docker image
-          docker load < /home/ubuntu/image.tar
-      
-          # Run the Docker container
-          docker run -d -p 8080:8080 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest
-        EOF
+      - name: Deploy to EC2 instance
+        run: |
+          # Connect to EC2 and perform deployment
+          ssh -o StrictHostKeyChecking=no ubuntu@174.129.93.55 << EOF
+            # Stop and remove any running container on port 8080
+            CONTAINER_ID=$(docker ps -q -f "ancestor=241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest")
+            if [ ! -z "$CONTAINER_ID" ]; then
+              docker stop $CONTAINER_ID
+              docker rm $CONTAINER_ID
+            fi
+
+            # Optionally remove old images if needed
+            IMAGE_ID=$(docker images -q 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest)
+            if [ ! -z "$IMAGE_ID" ]; then
+              docker rmi $IMAGE_ID
+            fi
+
+            # Login to AWS ECR
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 241533137718.dkr.ecr.us-east-1.amazonaws.com
+
+            # aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 241533137718.dkr.ecr.us-east-1.amazonaws.com
+            
+            # Pull the Docker image from ECR
+            docker pull 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest
+
+            # Run the Docker container on EC2
+            docker run -d -p 8080:8080 241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest
+          EOF
 
 
       # Optional: Check the running container logs (for debugging purposes)
