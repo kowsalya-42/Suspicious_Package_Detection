@@ -8,23 +8,19 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
 
-# Copy the application code and model into the container
+# Copy the current directory contents into the container at /app
 COPY . /app
 
-# Ensure the model directory exists
-RUN mkdir -p /app/model
-
 # Explicitly copy the model file if not already included in the above COPY
-COPY best.pt /app/model/best.pt
+COPY model/best.pt /app/model/best.pt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port your app runs on
-EXPOSE 8080
+EXPOSE 5000
 
 # Run app.py when the container launches
 CMD ["python", "app.py"]
