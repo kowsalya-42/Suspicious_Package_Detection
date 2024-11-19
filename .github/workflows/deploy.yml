@@ -83,7 +83,7 @@ jobs:
       - name: Deploy to EC2 instance
         run: |
           # Connect to EC2 and perform deployment
-          ssh -o StrictHostKeyChecking=no ubuntu@54.89.140.0 << EOF
+          ssh -o StrictHostKeyChecking=no ubuntu@44.211.24.166 << EOF
             # Stop and remove any running container on port 8080
             CONTAINER_ID=$(docker ps -q -f "ancestor=241533137718.dkr.ecr.us-east-1.amazonaws.com/suspicious_package_detection:latest")
             if [ ! -z "$CONTAINER_ID" ]; then
@@ -113,6 +113,6 @@ jobs:
       # Optional: Check the running container logs (for debugging purposes)
       - name: Check Docker container logs
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@54.89.140.0 << EOF
+          ssh -o StrictHostKeyChecking=no ubuntu@44.211.24.166 << EOF
             docker ps
           EOF
