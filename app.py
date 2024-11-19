@@ -7,7 +7,7 @@ import cv2
 app = Flask(__name__)
 
 # Load your vehicle detection model
-model = torch.hub.load('ultralytics/yolov5', 'custom', path=r'C:\Users\KOWSALYA\kowsi_personal\unattended-suspicious\model\best.pt')  # Adjusted path
+model = torch.hub.load('ultralytics/yolov5', 'custom', path=r'app\model\best.pt')  # Adjusted path
 
  # Adjusted path
 UPLOAD_FOLDER = 'static/uploads'
